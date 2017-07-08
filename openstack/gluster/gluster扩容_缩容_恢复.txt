@@ -1,0 +1,68 @@
+
+复制卷
+http://shyln.blog.51cto.com/6890594/1658664
+
+brick节点数据迁移(复制卷可以跳过)
+gluster volume replace-brick indexdata sjhl-o-FBI01v:/www/indexdata sjhl-o-FBI01v:/indexdisk
+
+移除brick
+gluster volume remove-brick indexdata replica 1  sjhl-o-FBI02v:/www/glusterdata force
+
+新增brick
+gluster volume add-brick indexdata replica 2 sjhl-o-FBI02v:/indexdisk force
+
+节点健康检
+gluster volume heal indexdata
+
+
+Shrinking Volumes
+
+在线缩小卷的大小，例如：当硬件损坏或者网络故障，在卷中移除相关的bricks。
+注意：移除bricks的时候，gluster的挂载点将不能继续访问数据(挂载点不能访问此bricks数据)，只有配置文件中的信息移除后你才能继续访问bricks的数据。
+当移除分布式复制卷或者分布式条带卷的时候，移除的bricks数目必须是replica或者stripe的倍数。
+
+移除bricks：
+gluster volume remove-brick VOLNAME BRICK
+
+检查卷信息：
+gluster volume info
+
+重新平衡卷，确保所有的文件都分布在bricks中
+gluster volume rebalance VOLNAME fix-layout start
+gluster volume rebalance VOLNAME migrate-data start
+
+也可以二合一同时操作
+gluster volume rebalance VOLNAME start
+
+
+Migrating Volumes
+
+迁移一个brick中的数据到另一个brick中
+1.存储授信
+gluster peer probe  node
+
+2.增加节点
+gluster volume add-brick indexdata replica 2 sjhl-o-FBI02v:/indexdisk
+
+3.平衡卷
+
+
+迁移
+
+迁移数据到另一个brick
+gluster volume replace-brick VOLNAME BRICKNEW-BRICK start
+中途暂停迁移
+gluster volume replace-brick VOLNAME BRICK NEW-BRICK  pause
+中途中断迁移
+gluster volume replace-brick VOLNAME BRICK NEW-BRICK abort
+检查brick迁移的进度状态
+gluster volume replace-brick VOLNAME BRICK NEW-BRICK status
+
+提交迁移数据从一个bricks到另一个brick
+gluster volume replace-brick VOLNAME BRICK NEW-BRICK commit
+
+
+查看每个brick的读性能
+gluster volume top VOLNAME read-perf [bs blk-size count count] [brick BRICK-NAME] [list-cnt cnt]
+查看每个brick的写性能
+gluster volume top VOLNAME write-perf [bs blk-size count count] [brick BRICK-NAME] [list-cnt cnt]
