@@ -1,0 +1,12 @@
+-A INPUT -p tcp -m multiport --dports 3260 -m comment --comment "001 cinder incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 80 -m comment --comment "001 horizon incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 9292 -m comment --comment "001 glance incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 5000,35357 -m comment --comment "001 keystone incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 3306 -m comment --comment "001 mariadb incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 6080 -m comment --comment "001 novncproxy incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 8770:8780 -m comment --comment "001 novaapi incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 9696 -m comment --comment "001 neutron incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 5672 -m comment --comment "001 qpid incoming" -j ACCEPT 
+-A INPUT -p tcp -m multiport --dports 8700 -m comment --comment "001 metadata incoming" -j ACCEPT 
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+-A INPUT -m state --state NEW -m tcp -p tcp --dport 5900:5999 -j ACCEPT

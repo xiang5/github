@@ -1,0 +1,50 @@
+tenant network是由用户来创建, 而provider network是由管理员来创建
+provider network 必须要和一个实际存在的物理网络匹配
+provider 网络是Flat模式，租户网络是vxlan
+
+Flat(扁平)：所有实例桥接到同一个虚拟网络，需要手动设置网桥。
+
+FlatDHCP：与Flat(扁平)管理模式类似，这种网络所有实例桥接到同一个虚拟网络，扁平拓扑。不同的是，正如名字的区别，实例的ip提供dhcp获取(nova-network节点提供dhcp服务)，而且可以自动帮助建立网桥。
+
+VLAN：为每个项目提供受保护的网段(虚拟LAN)。
+
+OpenStack 网络类型
+一个标准的 OpenStack 网络设置有 4 个不同的物理数据中心网络：
+管理网络：用于 OpenStack 各组件之间的内部通信。
+数据网络：用于云部署中虚拟数据之间的通信。
+外部网络：公共网络，外部或 internet 可以访问的网络。
+API 网络：暴露所有的 OpenStack APIs,包括 OpenStack 网络 API 给租户们。
+
+
+这种模式下与 Flat 模式不同的地方在于有一个 DHCP 进程，每一个运行 nova-network 进程的节点（网络控制节点/nove-network 主机）就是一个单独的网络。Nova 会在 nova-network 主机建立网桥（默认名称 br100，配置项 flat_network_bridge=br100），并给该网桥指定该网络的网关 IP，同时 Nova 在网桥处起一个 DHCP 进程，最后，会建立 iptables 规则（SNAT/DNAT）使虚拟机能够与外界通信，
+同时与一个 metadata 服务器通信以取得 cloud 内的信息。
+这种部署方式的缺点----单节点故障、无二层隔离（即所有的虚拟机都在一个广播域）。
+
+
+VLAN 模式与 Flat 模式的区别
+在 Flat 模式下，管理员的工作流程应该是这样的：
+为所有租户创建一个 IP 池：
+    nova-manage network create --fixed_range_v4=10.0.0.0/16 –label=public
+创建租户
+租户创建虚拟机，为虚拟机分配 IP 池中的可用 IP
+DB 中虚拟机信息可能如下图，从图中我们看到 2 个虚拟机处于同一网段。
+
+在 VLAN 模式下流程如下：
+创建新的租户，并记下租户的标识
+为该租户创建独占的 fixed_ip 段：
+nova-manage network create --fixed_range_v4=10.0.1.0/24 --vlan=102  --project_id="tenantID"
+租户创建虚拟机，从租户的私有 IP 段内分配 IP 给虚拟机
+因此，与 Flat 模式相比，VLAN 模式为网络增加了：将网络与租户关联和为网络分配一个 VLAN 号。
+(2) VXLAN的客户收益
+
+虚拟机可以跨三层网络实时迁移. ，不需要对物理网络重新配置，业务不中断；
+废弃STP协议，充分利用链路；
+可以创建16M互相隔离的虚拟子网，充分满足多租户数据中心的需求；
+接入交换机只学习物理服务器的MAC地址，不需要学习每个虚拟机的MAC，极大地节省MAC表空间提升的交换性能。
+
+
+gre解决了vlan id个数限制和跨机房互通问题；
+
+vxlan解决了vlan id个数限制和跨机房互通问题，同时解决了gre点对点隧道个数过多问题，同时实现了大2层网络，可用于vm在机房之间的的无缝迁移。
+
+

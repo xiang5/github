@@ -1,0 +1,968 @@
+﻿openstack 操作
+[root@dzc-o-control01v ~]# nova list --all-tenants  |grep Running 
+| 0871f80d-9da0-42df-8057-1d11ab81ba8c | dzc-elk-kfk01v         | ACTIVE  | -          | Running     | DMZ_NET=192.168.34.8     |
+| fc87e2cd-cab6-499b-b9a3-e5ed6f3edf3e | dzc-elk-kfk02v         | ACTIVE  | -          | Running     | DMZ_NET=192.168.34.9     |
+| f8241ec9-a975-4a29-8894-3f329f6e42b7 | dzc-elk-kfk03v         | ACTIVE  | -          | Running     | DMZ_NET=192.168.34.10    |
+| 5ebdd2bb-c96f-45d4-b534-0a5db78a15d9 | dzc-op-bigdata02c      | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.27 |
+| 4c89fe09-391d-4c36-9892-34032d8f4168 | dzc-op-cs01v           | ACTIVE  | -          | Running     | DMZ_NET=192.168.34.5     |
+| 44efd9af-0feb-4e40-b7c1-b5af06b0fbb7 | dzc-op-cstestcirros01v | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.11 |
+| 59505938-2a60-4ba7-8219-32ba7f800f6d | dzc-op-oacs01v         | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.21 |
+| 01be5e27-38f8-4835-ab9f-d3bd72b5b27f | dzc-op-spark01v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.22 |
+| 592b2dcc-f566-43ef-b19f-a1cee6ca78d5 | dzc-op-spark02v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.23 |
+| 2a397dc0-626d-4815-b467-bb5051f3e587 | dzc-op-spark03v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.24 |
+| d5039e13-c940-42e1-87f4-9a7c0d83b7dd | dzc-op-storm01v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.12 |
+| 4bff6f64-3d41-4d07-bb37-8a85cef8d7c5 | dzc-op-storm02v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.13 |
+| 456c88aa-407b-4ea4-81f8-41d0f72a5395 | dzc-op-storm03v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.14 |
+| 8cece09c-923f-4efd-9dea-0bd2af012aaa | dzc-op-storm06v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.15 |
+| 7588c19a-37f9-4332-aa95-eb610f64040b | dzc-op-storm07v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.16 |
+| ce88afe1-2389-4ed3-94ef-7ac56fa87b3b | dzc-op-storm08v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.17 |
+| a280fedd-7306-470e-9510-12a0a13e924b | dzc-op-storm09v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.18 |
+| 66d6a05b-15a2-4878-9c88-94761fb4f052 | dzc-op-storm10v        | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.20 |
+| 6f1b1551-42f0-4ea5-925a-85d90cd3c2ad | dzc-sj-sscs01c         | ACTIVE  | -          | Running     | INSIDE_NET=192.168.33.25 |
+
+[root@dzc-o-control01v ~]# nova service-list
++----+------------------+------------------+----------+---------+-------+----------------------------+-----------------+
+| Id | Binary           | Host             | Zone     | Status  | State | Updated_at                 | Disabled Reason |
++----+------------------+------------------+----------+---------+-------+----------------------------+-----------------+
+| 1  | nova-cert        | dzc-o-control01v | internal | enabled | up    | 2016-08-25T07:26:54.000000 | -               |
+| 2  | nova-consoleauth | dzc-o-control01v | internal | enabled | up    | 2016-08-25T07:26:51.000000 | -               |
+| 3  | nova-conductor   | dzc-o-control01v | internal | enabled | up    | 2016-08-25T07:26:54.000000 | -               |
+| 5  | nova-scheduler   | dzc-o-control01v | internal | enabled | up    | 2016-08-25T07:26:52.000000 | -               |
+| 13 | nova-consoleauth | dzc-o-control02  | internal | enabled | up    | 2016-08-25T07:26:48.000000 | -               |
+| 14 | nova-conductor   | dzc-o-control02  | internal | enabled | up    | 2016-08-25T07:26:55.000000 | -               |
+| 17 | nova-cert        | dzc-o-control02  | internal | enabled | up    | 2016-08-25T07:26:53.000000 | -               |
+| 18 | nova-scheduler   | dzc-o-control02  | internal | enabled | up    | 2016-08-25T07:26:53.000000 | -               |
+| 19 | nova-compute     | sjhl-o-compute03 | dzc      | enabled | up    | 2016-08-25T07:26:47.000000 | None            |
+| 20 | nova-compute     | sjhl-o-compute04 | dzc      | enabled | up    | 2016-08-25T07:26:53.000000 | None            |
+| 21 | nova-compute     | sjhl-o-compute05 | dzc      | enabled | up    | 2016-08-25T07:26:55.000000 | None            |
+| 22 | nova-compute     | sjhl-o-compute06 | dzc      | enabled | up    | 2016-08-25T07:26:53.000000 | None            |
+| 23 | nova-compute     | sjhl-o-compute08 | dzc      | enabled | up    | 2016-08-25T07:26:53.000000 | None            |
+| 24 | nova-compute     | sjhl-o-compute09 | dzc      | enabled | up    | 2016-08-25T07:26:48.000000 | None            |
+| 25 | nova-compute     | sjhl-o-compute10 | dzc      | enabled | up    | 2016-08-25T07:26:49.000000 | None            |
+| 26 | nova-compute     | sjhl-o-compute07 | dzc      | enabled | up    | 2016-08-25T07:26:50.000000 | None            |
+| 27 | nova-compute     | dzc-o-compute01  | dzc      | enabled | down  | 2016-01-19T11:26:46.000000 | -               |
+| 28 | nova-compute     | dzc-o-compute02  | dzc      | enabled | down  | 2016-08-21T11:02:06.000000 | None            |
++----+------------------+------------------+----------+---------+-------+----------------------------+-----------------+
+
+2016-09-01T08:50:54.899Z|227903|reconnect|INFO|unix:/var/run/openvswitch/db.sock: connection attempt failed (Connection refused)
+2016-09-01T08:50:54.899Z|227904|reconnect|INFO|unix:/var/run/openvswitch/db.sock: waiting 8 seconds before reconnect
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent RuntimeError: 
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent Command: ['sudo', 'neutron-rootwrap', '/etc/neutron/rootwr
+ap.conf', 'ovs-vsctl', '--timeout=10', 'list-ports', 'br-int']
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent Exit code: 1
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent Stdout: ''
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent Stderr: 'ovs-vsctl: unix:/var/run/openvswitch/db.sock: dat
+abase connection failed (Connection refused)\n'
+2016-08-26 03:47:04.156 4945 TRACE neutron.plugins.openvswitch.agent.ovs_neutron_agent 
+2016-08-26 03:47:05.981 4945 INFO neutron.plugins.openvswitch.agent.ovs_neutron_agent [req-c7f55ee0-5c82-4a83-b43d-639f34d0e0fa None] Agent out o
+f sync with plugin!
+
+/usr/share/openvswitch/scripts/ovs-ctl  restart
+
+
+
+
+
+
+
+#################################################################################################################################
+openstack 192.168.33.25  22 5433 端口映射
+/sbin/iptables -t nat -I PREROUTING -i eth1 -d 220.181.149.211 -p tcp --dport 5433 -j DNAT --to 192.168.33.25:5433
+/sbin/iptables -t nat -I POSTROUTING -o eth1 -s 192.168.33.25 -p tcp --dport 5433 -j SNAT --to 220.181.149.211:5433
+
+/sbin/iptables -t nat -I PREROUTING -i eth1 -d 220.181.149.211 -p tcp --dport 22 -j DNAT --to 192.168.33.25:33777
+/sbin/iptables -t nat -I POSTROUTING -o eth1 -s 192.168.33.25 -p tcp --dport 33777 -j SNAT --to 220.181.149.211:22
+
+
+#################################################################################################################################
+openstack api端点 
+服务
+服务端点
+Compute	     http://controller.light.fang.com:8774/v2/e599088c985f42e7948b12f601705cd3
+Network	     http://controller.light.fang.com:9696
+Volumev2	 http://controller.light.fang.com:8776/v2/e599088c985f42e7948b12f601705cd3
+Image	     http://controller.light.fang.com:9292
+Volume	     http://controller.light.fang.com:8776/v1/e599088c985f42e7948b12f601705cd3
+Identity	 http://controller.light.fang.com:5000/v2.0
+#################################################################################################################################
+openrc.sh 
+export OS_TENANT_NAME=admin
+export OS_USERNAME=admin
+export OS_PASSWORD=4d39d60402687927d789
+export OS_AUTH_URL=http://controller.light.fang.com:35357/v2.0
+
+fang.sh 
+export OS_TENANT_NAME=fang
+export OS_USERNAME=fang
+export OS_PASSWORD=b98af7c905dc24abaf1a
+export OS_AUTH_URL=http://controller.light.fang.com:5000/v2.0
+#################################################################################################################################
+使用curl获取tokens
+curl  -s -X POST http://220.181.149.153:35357/v2.0/tokens \
+-H "Content-Type: application/json"  \
+-d '{"auth": {"tenantName": "fang", "passwordCredentials": {"username": "fang","password": "b98af7c905dc24abaf1a"}}}' \
+ | python -m json.tool
+
+{
+    "access": {
+        "metadata": {
+            "is_admin": 0,
+            "roles": [
+                "9fe2ff9ee4384b1894a90878d3e92bab"
+            ]
+        },
+        "serviceCatalog": [
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02",
+                        "id": "05754bb535f04d58b4f2a6819ea31a67",
+                        "internalURL": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02",
+                        "publicURL": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "nova",
+                "type": "compute"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:9696",
+                        "id": "75d7d2b94fd14637a990056bf95ecec6",
+                        "internalURL": "http://controller.light.fang.com:9696",
+                        "publicURL": "http://controller.light.fang.com:9696",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "neutron",
+                "type": "network"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:8776/v2/516953ba1481400fb69642e9ffe14b02",
+                        "id": "37eb9ae73b72467b8695247873083335",
+                        "internalURL": "http://controller.light.fang.com:8776/v2/516953ba1481400fb69642e9ffe14b02",
+                        "publicURL": "http://controller.light.fang.com:8776/v2/516953ba1481400fb69642e9ffe14b02",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "cinderv2",
+                "type": "volumev2"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:9292",
+                        "id": "01461acd46ea449d93b38a730b721462",
+                        "internalURL": "http://controller.light.fang.com:9292",
+                        "publicURL": "http://controller.light.fang.com:9292",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "glance",
+                "type": "image"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:8776/v1/516953ba1481400fb69642e9ffe14b02",
+                        "id": "30d052b7f62344dabab8c29928d29f99",
+                        "internalURL": "http://controller.light.fang.com:8776/v1/516953ba1481400fb69642e9ffe14b02",
+                        "publicURL": "http://controller.light.fang.com:8776/v1/516953ba1481400fb69642e9ffe14b02",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "cinder",
+                "type": "volume"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://controller.light.fang.com:35357/v2.0",
+                        "id": "3e889bea96a34b55ad1ff2061f637851",
+                        "internalURL": "http://controller.light.fang.com:5000/v2.0",
+                        "publicURL": "http://controller.light.fang.com:5000/v2.0",
+                        "region": "regionOne"
+                    }
+                ],
+                "endpoints_links": [],
+                "name": "keystone",
+                "type": "identity"
+            }
+        ],
+        "token": {
+            "audit_ids": [
+                "uYRpEe93QtKQ-3ub9rtvNw"
+            ],
+            "expires": "2016-12-14T04:54:06Z",
+            "id": "8b73cd18dba84627aa35535b6d41ac14",
+            "issued_at": "2016-12-14T03:54:06.786482",
+            "tenant": {
+                "description": "Fang.com Tenant",
+                "enabled": true,
+                "id": "516953ba1481400fb69642e9ffe14b02",
+                "name": "fang"
+            }
+        },
+        "user": {
+            "id": "2a1a6dee31a0461c95a5ba8e7e1f30e1",
+            "name": "fang",
+            "roles": [
+                {
+                    "name": "_member_"
+                }
+            ],
+            "roles_links": [],
+            "username": "fang"
+        }
+    }
+}
+export OS_TOKEN =8b73cd18dba84627aa35535b6d41ac14
+ OS_TOKEN = response['access']['token']['id']
+
+curl -s -H "X-Auth-Token: $OS_TOKEN"    http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors   | python -m json.tool
+{
+    "flavors": [
+        {
+            "id": "1",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/1",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/1",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.tiny"
+        },
+        {
+            "id": "150a6e98-93a0-43cf-9567-ffa6efc61824",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/150a6e98-93a0-43cf-9567-ffa6efc61824",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/150a6e98-93a0-43cf-9567-ffa6efc61824",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang.storm"
+        },
+        {
+            "id": "2",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/2",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/2",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.small"
+        },
+        {
+            "id": "25",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/25",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/25",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang.win-32GMem-24Hz"
+        },
+        {
+            "id": "3",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/3",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/3",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.medium"
+        },
+        {
+            "id": "4",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/4",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/4",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.large"
+        },
+        {
+            "id": "5",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/5",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/5",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "m1.xlarge"
+        },
+        {
+            "id": "621313b5-1e0b-4819-a33b-68990cbb93ca",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/621313b5-1e0b-4819-a33b-68990cbb93ca",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/621313b5-1e0b-4819-a33b-68990cbb93ca",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang-kafka"
+        },
+        {
+            "id": "7",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/7",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/7",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang.spark"
+        },
+        {
+            "id": "8",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/8",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/8",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang.base-16H-24Mem"
+        },
+        {
+            "id": "ab132230-f7ae-4a1b-a3cf-cb9674fd004b",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/ab132230-f7ae-4a1b-a3cf-cb9674fd004b",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/ab132230-f7ae-4a1b-a3cf-cb9674fd004b",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang-kibanna"
+        },
+        {
+            "id": "f165ef3f-19a7-44ad-a24c-bc69bdcdd0f3",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/flavors/f165ef3f-19a7-44ad-a24c-bc69bdcdd0f3",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/f165ef3f-19a7-44ad-a24c-bc69bdcdd0f3",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "fang-logfilter"
+        }
+    ]
+}
+
+
+
+curl -s -H "X-Auth-Token: $OS_TOKEN" \
+  http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/images \
+  | python -m json.tool
+  
+{
+    "images": [
+        {
+            "id": "a8da627c-dd8d-4541-9785-793222017537",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/images/a8da627c-dd8d-4541-9785-793222017537",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/images/a8da627c-dd8d-4541-9785-793222017537",
+                    "rel": "bookmark"
+                },
+                {
+                    "href": "http://controller.light.fang.com:9292/516953ba1481400fb69642e9ffe14b02/images/a8da627c-dd8d-4541-9785-793222017537",
+                    "rel": "alternate",
+                    "type": "application/vnd.openstack.image"
+                }
+            ],
+            "name": "Windows2008-x86_64"
+        },
+        {
+            "id": "651a3d42-d699-45b8-92d3-2ca51a9d15df",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/images/651a3d42-d699-45b8-92d3-2ca51a9d15df",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/images/651a3d42-d699-45b8-92d3-2ca51a9d15df",
+                    "rel": "bookmark"
+                },
+                {
+                    "href": "http://controller.light.fang.com:9292/516953ba1481400fb69642e9ffe14b02/images/651a3d42-d699-45b8-92d3-2ca51a9d15df",
+                    "rel": "alternate",
+                    "type": "application/vnd.openstack.image"
+                }
+            ],
+            "name": "CentOS6.5-x86_64"
+        },
+        {
+            "id": "db5bc6ea-2b2d-4091-8461-e4aa9d7b2be5",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/images/db5bc6ea-2b2d-4091-8461-e4aa9d7b2be5",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/images/db5bc6ea-2b2d-4091-8461-e4aa9d7b2be5",
+                    "rel": "bookmark"
+                },
+                {
+                    "href": "http://controller.light.fang.com:9292/516953ba1481400fb69642e9ffe14b02/images/db5bc6ea-2b2d-4091-8461-e4aa9d7b2be5",
+                    "rel": "alternate",
+                    "type": "application/vnd.openstack.image"
+                }
+            ],
+            "name": "cirros-0.3.3-x86_64"
+        }
+    ]
+}
+
+
+curl -s -H "X-Auth-Token: $OS_TOKEN" \
+  http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers \
+  | python -m json.tool  
+  
+{
+    "servers": [
+        {
+            "id": "af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-docker-test"
+        },
+        {
+            "id": "473518a2-eaef-4db9-86cd-5b8af61deee6",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/473518a2-eaef-4db9-86cd-5b8af61deee6",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/473518a2-eaef-4db9-86cd-5b8af61deee6",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "tete"
+        },
+        {
+            "id": "87296cb6-b1b4-43fd-9dec-5da356ec8360",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/87296cb6-b1b4-43fd-9dec-5da356ec8360",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/87296cb6-b1b4-43fd-9dec-5da356ec8360",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-kfk03v"
+        },
+        {
+            "id": "4808adf5-af83-4160-be3f-3479bbe6d664",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/4808adf5-af83-4160-be3f-3479bbe6d664",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/4808adf5-af83-4160-be3f-3479bbe6d664",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-kfk02v"
+        },
+        {
+            "id": "e3bd82aa-3a0d-496a-bacc-4ecf611b09a4",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/e3bd82aa-3a0d-496a-bacc-4ecf611b09a4",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/e3bd82aa-3a0d-496a-bacc-4ecf611b09a4",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-kbna01v"
+        },
+        {
+            "id": "7909a0d8-5137-4a6f-b789-dadb1c2ee8f0",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/7909a0d8-5137-4a6f-b789-dadb1c2ee8f0",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/7909a0d8-5137-4a6f-b789-dadb1c2ee8f0",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-kbna02v"
+        },
+        {
+            "id": "2169322e-dbae-4783-b9fc-89ca155b05a6",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/2169322e-dbae-4783-b9fc-89ca155b05a6",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/2169322e-dbae-4783-b9fc-89ca155b05a6",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-logf03v"
+        },
+        {
+            "id": "28b3e84c-2477-432a-93be-4fe7fe43e047",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/28b3e84c-2477-432a-93be-4fe7fe43e047",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/28b3e84c-2477-432a-93be-4fe7fe43e047",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-logf02v"
+        },
+        {
+            "id": "59a37da5-1c21-4d0d-9629-2de59c188869",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/59a37da5-1c21-4d0d-9629-2de59c188869",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/59a37da5-1c21-4d0d-9629-2de59c188869",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-logf01v"
+        },
+        {
+            "id": "0871f80d-9da0-42df-8057-1d11ab81ba8c",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/0871f80d-9da0-42df-8057-1d11ab81ba8c",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/0871f80d-9da0-42df-8057-1d11ab81ba8c",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-elk-kfk01v"
+        },
+        {
+            "id": "5ebdd2bb-c96f-45d4-b534-0a5db78a15d9",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/5ebdd2bb-c96f-45d4-b534-0a5db78a15d9",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/5ebdd2bb-c96f-45d4-b534-0a5db78a15d9",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-bigdata02c"
+        },
+        {
+            "id": "62d621fb-bd7b-4922-be0a-9eb26f079d96",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/62d621fb-bd7b-4922-be0a-9eb26f079d96",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/62d621fb-bd7b-4922-be0a-9eb26f079d96",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-bigdata01c"
+        },
+        {
+            "id": "6f1b1551-42f0-4ea5-925a-85d90cd3c2ad",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/6f1b1551-42f0-4ea5-925a-85d90cd3c2ad",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/6f1b1551-42f0-4ea5-925a-85d90cd3c2ad",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-sj-sscs01c"
+        },
+        {
+            "id": "2a397dc0-626d-4815-b467-bb5051f3e587",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/2a397dc0-626d-4815-b467-bb5051f3e587",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/2a397dc0-626d-4815-b467-bb5051f3e587",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-spark03v"
+        },
+        {
+            "id": "592b2dcc-f566-43ef-b19f-a1cee6ca78d5",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/592b2dcc-f566-43ef-b19f-a1cee6ca78d5",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/592b2dcc-f566-43ef-b19f-a1cee6ca78d5",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-spark02v"
+        },
+        {
+            "id": "01be5e27-38f8-4835-ab9f-d3bd72b5b27f",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/01be5e27-38f8-4835-ab9f-d3bd72b5b27f",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/01be5e27-38f8-4835-ab9f-d3bd72b5b27f",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-spark01v"
+        },
+        {
+            "id": "4c89fe09-391d-4c36-9892-34032d8f4168",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/4c89fe09-391d-4c36-9892-34032d8f4168",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/4c89fe09-391d-4c36-9892-34032d8f4168",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-cs01v"
+        },
+        {
+            "id": "59505938-2a60-4ba7-8219-32ba7f800f6d",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/59505938-2a60-4ba7-8219-32ba7f800f6d",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/59505938-2a60-4ba7-8219-32ba7f800f6d",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-oacs01v"
+        },
+        {
+            "id": "66d6a05b-15a2-4878-9c88-94761fb4f052",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/66d6a05b-15a2-4878-9c88-94761fb4f052",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/66d6a05b-15a2-4878-9c88-94761fb4f052",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm10v"
+        },
+        {
+            "id": "25fd252f-65de-45d5-8ae1-371acabfb730",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/25fd252f-65de-45d5-8ae1-371acabfb730",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/25fd252f-65de-45d5-8ae1-371acabfb730",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-jjrcs01v"
+        },
+        {
+            "id": "a280fedd-7306-470e-9510-12a0a13e924b",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/a280fedd-7306-470e-9510-12a0a13e924b",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/a280fedd-7306-470e-9510-12a0a13e924b",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm09v"
+        },
+        {
+            "id": "ce88afe1-2389-4ed3-94ef-7ac56fa87b3b",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/ce88afe1-2389-4ed3-94ef-7ac56fa87b3b",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/ce88afe1-2389-4ed3-94ef-7ac56fa87b3b",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm08v"
+        },
+        {
+            "id": "7588c19a-37f9-4332-aa95-eb610f64040b",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/7588c19a-37f9-4332-aa95-eb610f64040b",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/7588c19a-37f9-4332-aa95-eb610f64040b",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm07v"
+        },
+        {
+            "id": "8cece09c-923f-4efd-9dea-0bd2af012aaa",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/8cece09c-923f-4efd-9dea-0bd2af012aaa",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/8cece09c-923f-4efd-9dea-0bd2af012aaa",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm06v"
+        },
+        {
+            "id": "456c88aa-407b-4ea4-81f8-41d0f72a5395",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/456c88aa-407b-4ea4-81f8-41d0f72a5395",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/456c88aa-407b-4ea4-81f8-41d0f72a5395",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm03v"
+        },
+        {
+            "id": "4bff6f64-3d41-4d07-bb37-8a85cef8d7c5",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/4bff6f64-3d41-4d07-bb37-8a85cef8d7c5",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/4bff6f64-3d41-4d07-bb37-8a85cef8d7c5",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm02v"
+        },
+        {
+            "id": "d5039e13-c940-42e1-87f4-9a7c0d83b7dd",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/d5039e13-c940-42e1-87f4-9a7c0d83b7dd",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/d5039e13-c940-42e1-87f4-9a7c0d83b7dd",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-storm01v"
+        },
+        {
+            "id": "44efd9af-0feb-4e40-b7c1-b5af06b0fbb7",
+            "links": [
+                {
+                    "href": "http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/44efd9af-0feb-4e40-b7c1-b5af06b0fbb7",
+                    "rel": "self"
+                },
+                {
+                    "href": "http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/44efd9af-0feb-4e40-b7c1-b5af06b0fbb7",
+                    "rel": "bookmark"
+                }
+            ],
+            "name": "dzc-op-cstestcirros01v"
+        }
+    ]
+}
+  
+  
+#################################################################################################################################
+OS-EXT-STS:task_state None
+addresses {u'DMZ_NET': [{u'OS-EXT-IPS-MAC:mac_addr': u'fa:16:3e:bd:43:88', u'version': 4, u'addr': u'192.168.34.19', u'OS-EXT-IPS:type': u'fixed'}]}
+links [{u'href': u'http://controller.light.fang.com:8774/v2/516953ba1481400fb69642e9ffe14b02/servers/af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f', u'rel': u'self'}, {u'href': u'http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/servers/af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f', u'rel': u'bookmark'}]
+image {u'id': u'651a3d42-d699-45b8-92d3-2ca51a9d15df', u'links': [{u'href': u'http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/images/651a3d42-d699-45b8-92d3-2ca51a9d15df', u'rel': u'bookmark'}]}
+OS-EXT-STS:vm_state active
+OS-SRV-USG:launched_at 2016-11-10T03:42:02.000000
+flavor {u'id': u'621313b5-1e0b-4819-a33b-68990cbb93ca', u'links': [{u'href': u'http://controller.light.fang.com:8774/516953ba1481400fb69642e9ffe14b02/flavors/621313b5-1e0b-4819-a33b-68990cbb93ca', u'rel': u'bookmark'}]}
+id af0b6d8b-a1e5-4bbc-b80d-f276e721bc0f
+security_groups [{u'name': u'default'}]
+user_id 2a1a6dee31a0461c95a5ba8e7e1f30e1
+OS-DCF:diskConfig AUTO
+accessIPv4 
+accessIPv6 
+progress 0
+OS-EXT-STS:power_state 1
+OS-EXT-AZ:availability_zone dzc
+config_drive 
+status ACTIVE
+updated 2016-11-10T03:42:02Z
+hostId e5eb801b08f75e39e11c408b80b72f55b46b0778cce58b234561619f
+e5eb801b08f75e39e11c408b80b72f55b46b0778cce58b234561619f
+OS-SRV-USG:terminated_at None
+key_name None
+name dzc-docker-test
+created 2016-11-10T03:41:55Z
+tenant_id 516953ba1481400fb69642e9ffe14b02
+os-extended-volumes:volumes_attached [{u'id': u'828f2ffc-574a-4ba1-aaae-b04784dfc84d'}]
+metadata {}
+
+
+
+#################################################################################################################################
+#################################################################################################################################
+#################################################################################################################################
+
+#!/usr/bin/python
+#coding:utf-8 
+"""
+    GET openstack content by API.
+"""
+import base64
+import urllib,httplib
+import json
+import os
+import urllib2 
+from urllib2 import URLError 
+from urlparse import urlparse
+
+class Openstack_API:
+    def __init__(self):
+        self.url = "220.181.149.153:35357"
+        self.header = {"Content-Type": 'application/json'}
+
+    def auth_login(self):
+        data = '{"auth": {"tenantName": "fang", "passwordCredentials": {"username": "fang","password": "b98af7c905dc24abaf1a"}}}'
+        conn = httplib.HTTPConnection(self.url)
+        conn.request("POST", "/v2.0/tokens", data, self.header)
+	try: 
+            result = conn.getresponse()
+	except URLError as e: 
+	    print "\033[041m 用户认证失败，请检查 !\033[0m", e.code 
+	else: 
+            response = json.loads(result.read()) 
+            result.close() 
+            return response
+
+    def get_tenant_host(self, api_token, api_urlt):
+        url = api_urlt[1]
+        params = urllib.urlencode({})
+        header = { "X-Auth-Token":api_token, "Content-type":"application/json" }
+        conn = httplib.HTTPConnection(url)
+        conn.request("GET", "%s/servers" % api_urlt[2], params, header)
+        response = conn.getresponse()
+        data = response.read()
+        dd = json.loads(data)
+        conn.close()
+        for i in range(len(dd['servers'])):
+            print dd['servers'][i]['name']
+ 
+def main():
+    openstack = Openstack_API()
+    response = openstack.auth_login()
+    api_token = response['access']['token']['id']
+    api_tenant = response['access']['token']['tenant']['id']
+    api_url = response['access']['serviceCatalog'][0]['endpoints'][0]['publicURL']
+    api_urlt = urlparse(response['access']['serviceCatalog'][0]['endpoints'][0]['publicURL'])
+    # Get tenant host
+    openstack.get_tenant_host(api_token, api_urlt)
+
+if __name__ == "__main__":
+    main()
+
+

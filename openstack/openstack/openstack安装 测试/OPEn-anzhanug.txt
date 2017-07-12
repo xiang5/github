@@ -1,0 +1,1054 @@
+关闭防火墙
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+systemctl set-default multi-user.target
+
+hostnamectl set-hostname openstack-node3
+hostnamectl status 
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g'  /etc/sysconfig/selinux
+echo -ne "
+192.168.226.50   openstack-node1 openstack-node1.openstack.com
+192.168.226.60   openstack-node2 openstack-node2.openstack.com
+192.168.226.70   openstack-node3 openstack-node3.openstack.com
+" >> /etc/hosts 
+
+grant all PRIVILEGES ON *.* to 'root'@'%' identified by '123456';
+echo "/dev/cdrom /mnt auto exec 0 0" >> /etc/fstab
+[base]
+name=base
+baseurl=file:///mnt
+enable=1
+gpgcheck=0
+
+
+for i in `seq 1 3`;do 
+ssh openstack-node$i  
+systemctl enable chronyd.service;
+systemctl start chronyd.service;
+timedatectl set-timezone Asia/Shanghai;
+done 
+
+#控制节点:controller
+1.管理网卡
+192.168.226.50  
+gateway:192.168.226.2
+
+
+
+
+# 网络节点:network
+1.管理网卡
+192.168.226.53   
+gateway:192.168.226.2   
+2.隧道接口
+192.168.227.53 
+3.外部接口
+
+
+# 计算节点compute1     
+1.管理网卡
+192.168.226.54   
+gateway:192.168.226.2  
+2.隧道接口
+192.168.227.54
+
+
+/etc/hosts/
+#controller
+192.168.226.51  controller
+#network
+192.168.226.60  network
+#computer1
+192.168.226.70  computer1 
+
+控制节点  
+yum -y install ntp 
+vim /etc/ntp.conf 
+restrict -4 default nomodify notrap kod
+restrict -6 default nomodify notrap kod
+server time.soufun.com iburst
+server 0.centos.pool.ntp.org iburst
+server 1.centos.pool.ntp.org iburst
+server 2.centos.pool.ntp.org iburst
+ 
+systemctl enable ntpd.service 
+systemctl start ntpd.service 
+其它节点
+yum -y install ntp 
+vim /etc/ntp.conf 
+server controller
+ 
+systemctl enable ntpd.service 
+systemctl start ntpd.service 
+
+ntpq -c peers
+ntpq -c assoc
+###################################
+数据库
+1、安装包 
+# yum install mariadb mariadb-server MySQL-python 
+ 
+2、编辑/etc/my.cnf 文件 
+A．在[mysqld]部分，设置 bind-address 的控制节点的管理网 IP 地址，以便通过
+管理网络访问其他节点： 
+[mysqld] 
+
+#bind-address = 192.168.226.51
+ 
+B．在[mysqld]部分中，设置以下值启用有用的选项和 UTF-8 字符集： 
+[mysqld] 
+
+default-storage-engine = innodb 
+innodb_file_per_table 
+collation-server = utf8_general_ci 
+init-connect = 'SET NAMES utf8' 
+character-set-server = utf8 
+
+完成安装 
+1、启动数据库服务，并将其配置为随系统自启动 
+systemctl enable mariadb.service 
+systemctl start mariadb.service 
+ 
+2、固定数据库服务，包括选择合适的 root 帐户密码 
+mysql_secure_installation 
+OpenStack 软件包 
+请注意 
+禁用或移除任何自动更新服务，因为他们可能影响你的 OpenStack 环境。 
+在所有节点上执行这些过程。 
+1、安装 yum-plugin-priorities 包 
+# yum install yum-plugin-priorities 
+ 
+2、安装 EPEL-release 组件 
+# yum install 
+http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epelrelease-7-2.noarch.rpm 
+OpenStack 存储库 
+1、安装 RDO-RELEASE-JUNO 包 
+# yum install http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno. 
+rpm 
+完成安装 
+1、 升级你系统上的软件包 
+# yum upgrade  
+请注意 
+如果在升级过程包括一个新的内核，重新启动您的系统将其激活。 
+2、RHEL 和 CentOS 默认启用了 SELinux。安装 SELinux 包自动管理 OpenStack 服务
+的安全策略 
+# yum install openstack-selinux 
+
+Messaging 服务 
+安装 RabbitMQ 消息代理服务 
+# yum install rabbitmq-server 
+配置消息代理服务 
+1、 启动消息代理服务，并将其配置为自启动
+systemctl enable rabbitmq-server.service 
+systemctl start rabbitmq-server.service 
+2、运行下面的命令，用合适的密码替换 RABBIT_PASS 
+# rabbitmqctl change_password guest RABBIT_PASS 
+Changing password for user "guest" ... 
+...done. 
+ 
+恭喜你，现在你已经准备好要安装 OpenStack 的服务了！ 
+ 
+ 
+添加 Identity 服务 
+安装和配置 
+本节介绍如何在控制器节点，安装和配置 OpenStack 的身份服务。 
+ 
+配置 OpenStack 的身份服务，你必须创建一个数据库和一个管理令牌（toke n）。 
+1、创建数据库，请完成以下步骤 
+A．登陆数据库： 
+$ mysql -u root –p 
+ 
+B．创建 keystone 数据库： 
+CREATE DATABASE keystone; 
+ 
+C．授予适当的访问 Keystone 数据库的权限： 
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY ' 123456'; 
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY ' 123456'; 
+
+D．退出数据库 
+ 
+2、生成一个随机值作为初始配置过程中的管理令牌 
+# openssl rand -hex 10 
+0c97f475c0ef2412c564
+
+安装和配置组件 
+1、 运行以下命令安装软件包 
+# yum install openstack-keystone python-keystoneclient 
+ 
+2、编辑/etc/keystone/keystone.conf 文件 A．在[DEFAULT]部分，定义初始管理的值： 
+[DEFAULT] 
+... 
+admin_token =0c97f475c0ef2412c564 
+使用您先前生成的随机值更换 ADMIN_TOKEN 
+ 
+B．在[database]部分，配置数据库访问： 
+[database] 
+... 
+connection = mysql://keystone:123456@controller/keystone 
+ 
+用你选择的数据库密码替换 keystone_dbpass。 
+ 
+C.（可选）在[DEFAULT]部分，启用详细日志记录协助解决问题： 
+[DEFAULT] 
+... 
+verbose = True
+3、创建通用的证书和密钥，限制访问相关文件 
+# keystone-manage pki_setup --keystone-user keystone --keystone-group 
+ keystone 
+# chown -R keystone:keystone /var/log/keystone 
+# chown -R keystone:keystone /etc/keystone/ssl 
+# chmod -R o-rwx /etc/keystone/ssl 
+ 
+4、填充 Keystone 身份服务数据库 
+# su -s /bin/sh -c "keystone-manage db_sync" keystone 
+ 
+ 
+完成安装 
+1、 启动身份服务和配置自启动 
+systemctl enable openstack-keystone.service 
+systemctl start openstack-keystone.service 
+ 
+2、默认情况下，身份服务存储在数据库中，无限过期的令牌积累大大增加了数
+据库的大小，可能会降低服务的性能，特别是在资源有限的环境中。我们建议您
+使用 cron 配置一个周期性任务，以清除过期的令牌： 
+# (crontab -l -u keystone 2>&1 | grep -q token_flush) || \ 
+ echo '@hourly /usr/bin/keystone-manage token_flush >/var/log/keystone/ 
+keystone-tokenflush.log 2>&1' \ 
+ >> /var/spool/cron/keystone 
+ 
+创建租户、用户和角色 1、配置管理令牌 
+export OS_SERVICE_TOKEN= 0c97f475c0ef2412c564
+ 
+更换 ADMIN_TOKEN 与您在“安装和配置”一节中所产生的管理令牌。例如： 
+export OS_SERVICE_TOKEN=0c97f475c0ef2412c564
+ 
+2、 配置端点 
+export OS_SERVICE_ENDPOINT=http://controller:35357/v2.0
+ 
+
+[root@controller ~]# keystone --help |grep create
+    ec2-credentials-create  Create EC2-compatible credentials for user per
+    endpoint-create         Create a new endpoint associated with a service.
+    role-create             Create new role.
+    service-create          Add service to Service Catalog.
+    tenant-create           Create new tenant.
+    user-create             Create new user.
+ 
+创建租户、用户和角色 
+1、创建一个 admin 租户、用户、角色 
+A．创建 admin 租户： 
+$ keystone tenant-create --name admin --description "Admin Tenant" 
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |           Admin Tenant           |
+|   enabled   |               True               |
+|      id     | 894dd0379a8c4905bc772d1f00157d0e |
+|     name    |              admin               |
++-------------+----------------------------------+
+0c97f475c0ef2412c564
+B．创建 admin 用户：
+[root@controller ~]# keystone user-create --name admin --pass 123456 --email 907974064@qq.com 
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |         907974064@qq.com         |
+| enabled  |               True               |
+|    id    | 18caba94087046798b01d98d441f2cd9 |
+|   name   |              admin               |
+| username |              admin               |
++----------+----------------------------------+
+C. 创建admin角色
+[root@controller ~]# keystone role-create --name admin
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|    id    | 009b3014ddee4cdca3a1e73d8d84ac87 |
+|   name   |              admin               |
++----------+----------------------------------+
+D．添加 admin 租户、admin 用户和 admin 角色： 
+keystone user-role-add --tenant admin --user admin --role admin
+E．在默认情况下，dashboard 限制用户访问_member_作用域。 
+创建_member_作用域： 
+[root@controller ~]# keystone role-create --name _member_
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|    id    | e4960f3fef38487d9c0215c6ad922a36 |
+|   name   |             _member_             |
++----------+----------------------------------+
+F．添加 admin 租户和用户到_member_角色： 
+keystone user-role-add --tenant admin --user admin --role _member_
+2、创建一个典型环境中的 demo 租户和用户 
+A．创建 demo 租户： 
+keystone tenant-create --name demo --description "Demo Tenant" 
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |           Demo Tenant            |
+|   enabled   |               True               |
+|      id     | 26acadadb9bb477aab51803d244103d5 |
+|     name    |               demo               |
++-------------+----------------------------------+
+B．创建 demo 用户： 
+[root@controller ~]# keystone user-create --name demo --pass 123456 --email 907974064@qq.com
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |         907974064@qq.com         |
+| enabled  |               True               |
+|    id    | d988d0908b70441da0222a2c03d2ebb6 |
+|   name   |               demo               |
+| username |               demo               |
++----------+----------------------------------+
+C．添加 demo 租户和用户到_member_角色： 
+keystone user-role-add --tenant demo --user demo --role _member_ 
+3、OpenStack 服务还需要一个租户、用户和角色与其他服务进行交互。 
+•创建 service 租户： 
+keystone tenant-create --name service --description "Service Tenant"
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |          Service Tenant          |
+|   enabled   |               True               |
+|      id     | 3c4b09a7cd31430b850a4df7aa7e3068 |
+|     name    |             service              |
++-------------+----------------------------------+
+创建 service entity 和 API 端点 
+1、身份服务管理你的 OpenStack 环境目录服务。服务使用此目录在您的环境中
+查找其他服务 
+创建用于 Identity service 的服务：
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |        OpenStack Identity        |
+|   enabled   |               True               |
+|      id     | da54f9e872f642b4a476cad735e192ee |
+|     name    |             keystone             |
+|     type    |             identity             |
++-------------+----------------------------------+
+2、创建用于 Identity service 的 API 端点 
+keystone endpoint-create \
+--service-id $(keystone service-list | awk '/ identity / {print $2}') \
+--publicurl http://controller:5000/v2.0 \
+--internalurl http://controller:5000/v2.0 \
+--adminurl http://controller:35357/v2.0 \
+--region regionOne ;
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+|   adminurl  |   http://controller:35357/v2.0   |
+|      id     | e51b69554a244a9bbebc80d964cb2adc |
+| internalurl |   http://controller:5000/v2.0    |
+|  publicurl  |   http://controller:5000/v2.0    |
+|    region   |            regionOne             |
+|  service_id | da54f9e872f642b4a476cad735e192ee |
++-------------+----------------------------------+
+
+验证操作 
+本节描述如何验证身份服务操作。 
+1、卸载 os_service_token 和 os_service_endpoint 环境变量 
+unset OS_SERVICE_TOKEN OS_SERVICE_ENDPOINT 
+ 
+2、作为 admin 租户和角色，请求认证令牌 
+keystone --os-tenant-name admin --os-username admin   --os-auth-url http://controller:35357/v2.0 token-get 
+ 
+3、作为 admin 租户和用户，验证列表 
+keystone --os-tenant-name admin --os-username admin   --os-auth-url http://controller:35357/v2.0 tenant-list 
++----------------------------------+---------+---------+
+|                id                |   name  | enabled |
++----------------------------------+---------+---------+
+| 894dd0379a8c4905bc772d1f00157d0e |  admin  |   True  |
+| 26acadadb9bb477aab51803d244103d5 |   demo  |   True  |
+| 3c4b09a7cd31430b850a4df7aa7e3068 | service |   True  |
++----------------------------------+---------+---------+
+ 
+4、列出用户身份验证服务 
+keystone --os-tenant-name admin --os-username admin   --os-auth-url http://controller:35357/v2.0 user-list 
++----------------------------------+-------+---------+------------------+
+|                id                |  name | enabled |      email       |
++----------------------------------+-------+---------+------------------+
+| 18caba94087046798b01d98d441f2cd9 | admin |   True  | 907974064@qq.com |
+| d988d0908b70441da0222a2c03d2ebb6 |  demo |   True  | 907974064@qq.com |
++----------------------------------+-------+---------+------------------+
+
+ 
+5、列出角色身份验证服务 
+keystone --os-tenant-name admin --os-username admin --os-auth-url http://controller:35357/v2.0 user-list
++----------------------------------+-------+---------+------------------+
+|                id                |  name | enabled |      email       |
++----------------------------------+-------+---------+------------------+
+| 18caba94087046798b01d98d441f2cd9 | admin |   True  | 907974064@qq.com |
+| d988d0908b70441da0222a2c03d2ebb6 |  demo |   True  | 907974064@qq.com |
++----------------------------------+-------+---------+------------------+
+6、作为 demo 租户和用户，请求认证令牌 
+keystone --os-tenant-name admin --os-username admin --os-auth-url http://controller:35357/v2.0 token-get 
++-----------+----------------------------------+
+|  Property |              Value               |
++-----------+----------------------------------+
+|  expires  |       2016-08-01T08:10:36Z       |
+|     id    | ca66a975aa0648eb9d876d31dd63cd97 |
+| tenant_id | 894dd0379a8c4905bc772d1f00157d0e |
+|  user_id  | 18caba94087046798b01d98d441f2cd9 |
++-----------+----------------------------------+
+
+ 
+7、列出用户验证 
+keystone --os-tenant-name demo --os-username demo --os-auth-url http://controller:35357/v2.0 user-list 
+You are not authorized to perform the requested action, admin_required.(HTTP 403)
+
+创建 OpenStack 客户端环境脚本 
+为 admin 和 demo 租户和用户创建客户端环境脚本。本指南参考这些脚本加载客
+户端适当的凭据。 
+1、编辑 admin-openrc.sh 文件，添加以下内容 
+export OS_TENANT_NAME=admin 
+export OS_USERNAME=admin 
+export OS_PASSWORD=123456 
+export OS_AUTH_URL=http://controller:35357/v2.0 
+ 
+使用你在用户身份管理服务选择的密码替换 admin_pass。 
+ 
+3、 编辑 demo-openrc.sh 文件，添加以下内容 
+export OS_TENANT_NAME=demo 
+export OS_USERNAME=demo 
+export OS_PASSWORD=123456
+export OS_AUTH_URL=http://controller:5000/v2.0 
+ 
+用您选择的密码替换 DEMO_PASS 演示用户的身份服务。 
+ 
+加载客户端环境脚本 
+$ source admin-openrc.sh
+
+
+三、添加 Image 服务 
+
+安装和配置 
+本节介绍如何安装和配置 Image 服务，代号为 glance，在控制器节点上。为简单
+起见，此存储镜像配置为本地文件系统。 
+ 
+配置的先决条件 
+在您安装和配置镜像服务之前，您必须创建一个数据库和身份服务终端凭据。 
+1、创建数据库，完成这些步骤 
+A．登陆数据库： 
+$ mysql -u root -p 
+ 
+B．创建 glance 数据库： 
+CREATE DATABASE glance; 
+ 
+C．授予权限： 
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY '123456'; 
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY '123456';
+用一个合适的密码替换 GLANCE_DBPASS。 
+ 
+D．退出数据库 
+ 
+2、执行 admin 凭证脚本文件 
+$ source admin-openrc.sh 
+ 
+3、创建身份服务凭据 
+A．创建 glance 用户： 
+
+[root@controller ~]# keystone user-create --name glance --pass glance
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |                                  |
+| enabled  |               True               |
+|    id    | c8107e8f1a514942baf2726aa0f2d539 |
+|   name   |              glance              |
+| username |              glance              |
++----------+----------------------------------+
+B．将 glance 用户链接到 service 租户和 admin 角色： 
+keystone user-role-add --user glance --tenant service --role admin 
+C．创建 glance 服务： 
+[root@controller ~]# keystone service-create --name glance --type image --description "Openstack Image Service"
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |     Openstack Image Service      |
+|   enabled   |               True               |
+|      id     | dc36ca24daa941f8974181373f400edb |
+|     name    |              glance              |
+|     type    |              image               |
++-------------+----------------------------------+
+4、创建身份服务端点 
+keystone endpoint-create \
+--service-id $(keystone service-list | awk '/ image / {print $2}') \
+--publicurl http://controller:9292 \
+--internalurl http://controller:9292 \
+--adminurl http://controller:9292 \
+--region regionOne
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+|   adminurl  |      http://controller:9292      |
+|      id     | d0c768fd4c4b4a8fa53c1617de93b55c |
+| internalurl |      http://controller:9292      |
+|  publicurl  |      http://controller:9292      |
+|    region   |            regionOne             |
+|  service_id | dc36ca24daa941f8974181373f400edb |
++-------------+----------------------------------+
+
+安装和配置 Image 服务组件 
+1、安装包 # yum install openstack-glance python-glanceclient 
+ 
+2、编辑/etc/glance/glance-api.conf 文件 
+A．在[database]部分，配置数据库访问： 
+[database] 
+... 
+connection = mysql://glance:123456@controller/glance 
+ 
+GLANCE_DBPASS 替换为您选择的镜像服务数据库密码。 
+ 
+B．在[ keystone_authtoken ]和[ paste_deploy ]部分，配置身份服务访问： 
+[keystone_authtoken] 
+... 
+auth_uri = http://controller:5000/v2.0 
+identity_uri = http://controller:35357 
+admin_tenant_name = service 
+admin_user = glance 
+admin_password = glance  
+[paste_deploy] 
+... 
+flavor = keystone 
+ 
+GLANCE_PASS 替换为您选择的 glance 用户密码。 
+请注意 
+注释掉任何 auth_host 、auth_port、auth_protocol 选项，因为 identity_uri 选项
+将替换他们。 
+ 
+C.（可选）在[DEFAULT]部分，启用详细记录来帮助解决问题 
+[DEFAULT] 
+... 
+verbose = True 
+
+3、编辑/etc/glance/glance-registry.conf 文件 
+A．在[database]部分，配置数据库访问： 
+[database] 
+... 
+connection = mysql://glance:123456@controller/glance 
+ 
+GLANCE_DBPASS 替换为您选择的镜像服务数据库密码。 
+ 
+B．在[keystone_authtoken]和[paste_deploy]部分，配置身份服务访问： 
+[keystone_authtoken] 
+... auth_uri = http://controller:5000/v2.0 
+identity_uri = http://controller:35357 
+admin_tenant_name = service 
+admin_user = glance 
+admin_password = glance 
+[paste_deploy] 
+... 
+flavor = keystone 
+ 
+GLANCE_PASS 替换为您选择的 glance 用户身份服务密码。 
+ 
+请注意 
+注释掉任何 auth_host、 auth_port、auth_protocol 选项，因为 identity_uri 选项
+将替换他们。 
+ 
+C．在[DEFAULT]部分，启用详细的日志记录，来协助排除潜在的故障： 
+[DEFAULT] 
+... 
+verbose = True 
+ 
+4、填充 Image 服务数据库 
+su -s /bin/sh -c "glance-manage db_sync" glance 
+完成安装 
+•启动镜像服务和配置随系统启动： 
+systemctl enable openstack-glance-api.service 
+systemctl enable openstack-glance-registry.service 
+systemctl start openstack-glance-api.service 
+systemctl start openstack-glance-registry.service 
+
+本节描述如何使用 CirrOS 验证镜像服务，一个小的 Linux 镜像可以帮助测试你的
+OpenStack 部署。 
+1、创建和切换到一个本地临时目录 
+mkdir /tmp/images 
+cd /tmp/images 
+ 
+2、下载镜像到本地的临时目录中 
+wget http://download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img
+ 
+3、执行 admin 凭证文件
+source admin-openrc.sh 
+ 
+4、上传镜像到镜像服务
+[root@controller images]# glance image-create --name "cirros-0.3.3-x86_64-disk.img" --file cirros-0.3.3-x86_64-disk.img  --disk-format qcow2 --container-format bare --is-public True --progress[=============================>] 100%
++------------------+--------------------------------------+
+| Property         | Value                                |
++------------------+--------------------------------------+
+| checksum         | 133eae9fb1c98f45894a4e60d8736619     |
+| container_format | bare                                 |
+| created_at       | 2016-08-01T08:28:29                  |
+| deleted          | False                                |
+| deleted_at       | None                                 |
+| disk_format      | qcow2                                |
+| id               | a4efd146-dee2-492f-a633-95b9595d1499 |
+| is_public        | True                                 |
+| min_disk         | 0                                    |
+| min_ram          | 0                                    |
+| name             | cirros-0.3.3-x86_64-disk.img         |
+| owner            | 894dd0379a8c4905bc772d1f00157d0e     |
+| protected        | False                                |
+| size             | 13200896                             |
+| status           | active                               |
+| updated_at       | 2016-08-01T08:28:29                  |
+| virtual_size     | None                                 |
++------------------+--------------------------------------+
+6、删除本地临时目录 
+$ rm -r /tmp/images 
+
+四、添加计算服务 
+安装和配置控制器节点 
+配置的先决条件 
+1、创建数据库，完成这些步骤 
+A．登陆数据库： 
+$ mysql -u root –p 
+ 
+B．创建 Nova 数据库： 
+CREATE DATABASE nova; 
+ 
+C．授予权限： 
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY '123456'; 
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY '123456'; 
+ 
+用一个合适的密码替换 NOVA_DBPASS。 
+ 
+D．退出数据库
+
+2、 执行 admin 凭证文件 
+source admin-openrc.sh 
+ 
+3、创建身份服务凭证，完成以下步骤 
+A．创建 nova 用户：  
+[root@controller ~]# keystone user-create --name nova --pass nova
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |                                  |
+| enabled  |               True               |
+|    id    | ea3254d0db1b4e89a95459b90c6c3a68 |
+|   name   |               nova               |
+| username |               nova               |
++----------+----------------------------------+
+B．Nova 用户链接到 service 租户和 admin 角色：
+keystone user-role-add --user nova --tenant service --role admin
+C．创建 nova 服务：
+[root@controller ~]# keystone service-create --name nova --type compute --description "OpenStack Compute"
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |        OpenStack Compute         |
+|   enabled   |               True               |
+|      id     | 550d1346598249d38e5796f98e78e331 |
+|     name    |               nova               |
+|     type    |             compute              |
++-------------+----------------------------------+
+4、创建计算服务端点
+keystone endpoint-create \
+--service-id $(keystone service-list | awk '/ compute / {print $2}') \
+--publicurl http://controller:8774/v2/%\(tenant_id\)s \
+--internalurl http://controller:8774/v2/%\(tenant_id\)s \
+--adminurl http://controller:8774/v2/%\(tenant_id\)s \
+--region regionOne 
++-------------+-----------------------------------------+
+|   Property  |                  Value                  |
++-------------+-----------------------------------------+
+|   adminurl  | http://controller:8774/v2/%(tenant_id)s |
+|      id     |     68023cf4b6c94c5ca2e6614990f015b2    |
+| internalurl | http://controller:8774/v2/%(tenant_id)s |
+|  publicurl  | http://controller:8774/v2/%(tenant_id)s |
+|    region   |                regionOne                |
+|  service_id |     550d1346598249d38e5796f98e78e331    |
++-------------+-----------------------------------------+
+controller
+安装和配置计算控制器组件 
+1、安装包 
+yum install -y openstack-nova-api openstack-nova-cert openstack-nova-conductor openstack-nova-console openstack-nova-novncproxy openstack-nova-scheduler python-novaclient
+
+2、编辑/etc/nova/nova.conf 文件，并完成以下操作 
+A．在[database]部分，配置数据库访问： 
+[database] 
+... 
+connection = mysql://nova: NOVA_DBPASS@controller/nova 
+ 用您选择的密码替换 NOVA_DBPASS 计算数据库。 
+ 
+B．在[DEFAULT]部分，配置 RabbitMQ message broker 访问: 
+[DEFAULT] 
+... 
+rpc_backend = rabbit 
+rabbit_host = controller 
+rabbit_password = 123456 
+ 
+用您选择的 RabbitMQ 账户密码替换 RABBIT_PASS。 
+ 
+C．在[keystone_authtoken]部分，配置身份服务访问: 
+[keystone_authtoken] 
+... 
+auth_uri = http://controller:5000/v2.0 
+identity_uri = http://controller:35357 
+admin_tenant_name = service 
+admin_user = nova 
+admin_password =nova 
+ 
+用您选择的 nova 用户密码替换 NOVA_PASS。 
+ 
+请注意 
+注释掉任何 auth_host 、auth_port、auth_protocol 选项，因为 identity_uri 选项
+将替换他们。 
+ 
+D．在[DEFAULT]部分，my_ip 选项配置为使用控制器节点管理接口的 IP 地址： 
+[DEFAULT] 
+... 
+my_ip = 192.168.226.51
+ 
+E．在[DEFAULT]部分，VNC 代理配置为使用控制器节点管理接口的 IP 地址： 
+[DEFAULT] 
+... 
+vncserver_listen = 192.168.226.51
+vncserver_proxyclient_address = 192.168.226.51
+ 
+F．在[glance]部分，配置镜像的位置服务： 
+[glance] 
+... 
+host = controller 
+ 
+G．（可选）在[DEFAULT]部分，启用详细日志记录协助故障排除。 
+[DEFAULT] ... 
+verbose = True 
+ 
+3、填充 Nova 计算数据库 
+su -s /bin/sh -c "nova-manage db sync" nova 
+完成安装 
+•启动计算服务和配置随系统自启动 
+systemctl enable openstack-nova-api.service 
+systemctl enable openstack-nova-cert.service 
+systemctl enable openstack-nova-consoleauth.service 
+systemctl enable openstack-nova-scheduler.service 
+systemctl enable openstack-nova-conductor.service 
+systemctl enable openstack-nova-novncproxy.service 
+systemctl start openstack-nova-api.service 
+systemctl start openstack-nova-cert.service 
+systemctl start openstack-nova-consoleauth.service 
+systemctl start openstack-nova-scheduler.service 
+systemctl start openstack-nova-conductor.service 
+systemctl start openstack-nova-novncproxy.service 
+
+computer1
+安装和配置一个计算节点 
+该服务支持多种虚拟机监控程序（Hypervisor）或 vm 部署实例。为简单起见，
+本配置使用 QEMU 虚拟机监控程序的 KVM 扩展计算节点。支持虚拟机的硬件加
+速。你可以通过计算节点横向扩展您的环境。 
+ 
+安装和配置计算程序组件 
+1、安装包 
+yum install -y openstack-nova-compute 
+ 
+2、编辑/etc/nova/nova.conf 文件，并完成以下操作 
+A．在[DEFAULT]部分，配置 RabbitMQ message broker 访问： 
+[DEFAULT] 
+... 
+rpc_backend = rabbit 
+rabbit_host = controller 
+rabbit_password =123456
+ 
+用您选择的 RabbitMQ 账户密码替换 RABBIT_PASS。 
+ 
+B．在[keystone_authtoken]部分，配置身份服务访问： 
+[keystone_authtoken] ... 
+auth_uri = http://controller:5000/v2.0 
+identity_uri = http://controller:35357 
+admin_tenant_name = service 
+admin_user = nova 
+admin_password =nova 
+ 
+用您选择的 nova 用户密码替换 NOVA_PASS。 
+ 
+请注意 
+注释掉任何 auth_host 、auth_port、auth_protocol 选项，因为 identity_uri 选项
+将替换他们。 
+ 
+C．在[DEFAULT]部分，配置 my_ip 选项 
+[DEFAULT] 
+... 
+my_ip =192.168.226.70
+ 
+在你的计算节点，使用管理接口的IP地址替换 management_interface_ip_address，
+通常 10.0.0.31 为例子中的第一个体系结构的节点。 
+ 
+D．在[DEFAULT]部分，启用和配置远程控制台访问： 
+[DEFAULT] 
+... 
+vnc_enabled = True 
+vncserver_listen = 0.0.0.0 
+vncserver_proxyclient_address =192.168.226.70
+novncproxy_base_url = http://controller:6080/vnc_auto.html 
+ 
+服务器组件监听所有 IP 地址，代理组件只监听管理接口计算节点的 IP 地址。你
+可以使用一个 web 浏览器来访问远程主机计算节点上的实例。 
+ 
+用计算节点管理网络接口 IP 地址替换 MANAGEMENT_INTERFACE_IP_ADDRESS，
+通常 10.0.0.31 为例子中的第一个体系结构的节点。 
+ 
+E．在[glance]部分，配置镜像的位置服务 
+[glance] 
+... 
+host = controller 
+ 
+F．(可选)在[DEFAULT]部分，启用详细日志记录协助故障排除。 
+[DEFAULT] 
+... 
+verbose = True  
+完成安装 
+1、确定您的计算节点支持虚拟机硬件加速 
+$ egrep -c '(vmx|svm)' /proc/cpuinfo 
+ 
+如果该命令返回一个值或更多，则你的计算节点支持硬件加速，通常不需要额外
+的配置。 
+相反，如果该命令返回零个值，则计算节点不支持硬件加速，你必须配置 libvirt 
+KVM 使用 QEMU。 
+ 
+在/etc/nova/nova.conf 文件，编辑[libvirt]部分如下： 
+[libvirt] 
+... 
+virt_type = qemu 
+ 
+2、启动计算服务并配置随系统自启动 
+systemctl enable libvirtd.service 
+systemctl start libvirtd.service 
+systemctl enable openstack-nova-compute.service 
+systemctl start openstack-nova-compute.service 
+
+验证操作 
+本节描述如何验证操作计算服务。 
+ 
+请注意 
+控制器节点上执行这些命令。 
+ 
+1、执行 admin 凭证文件 
+$ source admin-openrc.sh 
+ 
+2、 验证服务组件列表 
+$ nova service-list 
+[root@controller ~]# nova service-list
++----+------------------+------------+----------+---------+-------+----------------------------+-----------------+
+| Id | Binary           | Host       | Zone     | Status  | State | Updated_at                 | Disabled Reason |
++----+------------------+------------+----------+---------+-------+----------------------------+-----------------+
+| 1  | nova-cert        | controller | internal | enabled | up    | 2016-08-03T08:19:43.000000 | -               |
+| 2  | nova-consoleauth | controller | internal | enabled | up    | 2016-08-03T08:19:49.000000 | -               |
+| 3  | nova-conductor   | controller | internal | enabled | up    | 2016-08-03T08:19:42.000000 | -               |
+| 4  | nova-scheduler   | controller | internal | enabled | up    | 2016-08-03T08:19:50.000000 | -               |
+| 5  | nova-compute     | computer1  | nova     | enabled | up    | 2016-08-03T08:19:51.000000 | -               |
+| 6  | nova-compute     | controller | nova     | enabled | up    | 2016-08-03T08:19:44.000000 | None            |
++----+------------------+------------+----------+---------+-------+----------------------------+-----------------+
+
+3、查看镜像列表服务 
+
+[root@controller ~]# nova image-list
++--------------------------------------+------------------------------+--------+--------+
+| ID                                   | Name                         | Status | Server |
++--------------------------------------+------------------------------+--------+--------+
+| a4efd146-dee2-492f-a633-95b9595d1499 | cirros-0.3.3-x86_64-disk.img | ACTIVE |        |
++--------------------------------------+------------------------------+--------+--------+
+
+
+
+
+五、添加一个网络组件 
+ 
+使用 OpenStack 网络(neutron) 
+ 
+安装和配置控制器节点 
+配置的先决条件 
+1、 创建数据库 
+A．登录 MySQL： 
+$ mysql -u root –p 
+ 
+B．创建 neutron 数据库： 
+CREATE DATABASE neutron; 
+ 
+C．授予权限： 
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '123456'; 
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY '123456';
+ 
+用一个合适的密码替换 NEUTRON_DBPASS。 
+ D．退出数据库 
+ 
+2、 执行 admin 凭证文件 
+source admin-openrc.sh 
+3、 创建身份服务凭证 
+创建 neutron 用户: 
+[root@controller ~]# keystone user-create --name neutron --pass neutron
++----------+----------------------------------+
+| Property |              Value               |
++----------+----------------------------------+
+|  email   |                                  |
+| enabled  |               True               |
+|    id    | 3f73c2052b8e49acbc08b19e481ed1de |
+|   name   |             neutron              |
+| username |             neutron              |
++----------+----------------------------------+
+B．neutron 用户链接到 service 租户和 admin 角色： 
+keystone user-role-add --user neutron --tenant service --role admin
+
+C．创建 neutron 服务： 
+[root@controller ~]# keystone service-create --name neutron --type network --description "OpenStack Networking"
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |       OpenStack Networking       |
+|   enabled   |               True               |
+|      id     | 1c173a5c2fa94b7f87591ad69e81f9c4 |
+|     name    |             neutron              |
+|     type    |             network              |
++-------------+----------------------------------+
+
+D．创建身份服务： 
+[root@controller ~]# keystone endpoint-create --service-id $(keystone service-list | awk '/ network / {print $2}') --publicurl http://controller:9696  --adminurl http://controller:9696 --internalurl http://controller:9696 --region regionOne ;
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+|   adminurl  |      http://controller:9696      |
+|      id     | f62124bf6b2246298d20acb7edd61d00 |
+| internalurl |      http://controller:9696      |
+|  publicurl  |      http://controller:9696      |
+|    region   |            regionOne             |
+|  service_id | 1c173a5c2fa94b7f87591ad69e81f9c4 |
++-------------+----------------------------------+
+安装网络组件 
+# yum install openstack-neutron openstack-neutron-ml2 python-neutronclient    openstack-neutron-openvswitch ipset
+错误：python-neutron conflicts with python2-eventlet-0.18.4-1.el7.noarch
+
+
+yum install centos-release-openstack-liberty
+# CentOS-OpenStack-liberty.repo
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/Cloud for more
+# information
+
+[centos-openstack-liberty]
+name=CentOS-7 - OpenStack liberty
+baseurl=http://mirror.centos.org/centos/7/cloud/$basearch/openstack-liberty/
+gpgcheck=0
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-SIG-Cloud
+
+[centos-openstack-liberty-test]
+name=CentOS-7 - OpenStack liberty Testing
+baseurl=http://buildlogs.centos.org/centos/7/cloud/$basearch/openstack-liberty/
+gpgcheck=0
+enabled=1
+
+
+配置网络服务器组件 
+•编辑/etc/neutron/neutron.conf 文件，并完成以下步骤 
+A．在[database]部分，配置数据库访问： 
+[database] 
+... 
+connection = mysql://neutron:123456@controller/neutron 
+ 
+NEUTRON_DBPASS 替换为您选择的数据库密码。 
+ 
+B．在[DEFAULT]部分，配置 RabbitMQ message broker 访问： 
+[DEFAULT] 
+... 
+rpc_backend = rabbit 
+rabbit_host = controller 
+rabbit_password = 123456 
+C．在[DEFAULT]和[ keystone_authtoken ]部分，配置身份服务访问： 
+[DEFAULT] 
+... 
+auth_strategy = keystone 
+[keystone_authtoken] 
+... 
+auth_uri = http://controller:5000/v2.0 
+identity_uri = http://controller:35357 
+admin_tenant_name = service 
+admin_user = neutron 
+admin_password= neutron
+使用你选择的 neutron 用户密码替换 NEUTRON_PASS。 
+请注意 
+注释掉 auth_host、auth_port 和 auth_protocol，因为 identity_uri 选项将替换它们。 
+ 
+在[DEFAULT]部分，使模块化 2 层（ML2）插件和路由器的 IP 地址服务重叠： 
+[DEFAULT] 
+... 
+core_plugin = ml2 
+service_plugins = router 
+allow_overlapping_ips = True 
+ 
+E．在[DEFAULT]部分，配置网络通知计算网络拓扑结构变化： 
+[DEFAULT] 
+... 
+notify_nova_on_port_status_changes = True 
+notify_nova_on_port_data_changes = True 
+nova_url = http://controller:8774/v2 
+nova_admin_auth_url = http://controller:35357/v2.0 
+nova_region_name = regionOne 
+nova_admin_username = nova 
+nova_admin_tenant_id = 3c4b09a7cd31430b850a4df7aa7e3068
+nova_admin_password = 123456
+ 
+分别使用 service 租户(id)、nova 用户密码替换 SERVICE_TENANT_ID 和 NOVA_PASS。 
+ 
+获取 service 租户(id)： 
+$ source admin-openrc.sh 
+[root@controller ~]# keystone tenant-get service
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |          Service Tenant          |
+|   enabled   |               True               |
+|      id     | 3c4b09a7cd31430b850a4df7aa7e3068 |
+|     name    |             service              |
++-------------+----------------------------------+
+
+ 
+F．(可选)在[DEFAULT]部分，启用详细日志记录协助故障排除 
+[DEFAULT] 
+... 
+verbose = True  
+
+
+
+
+配置模块 2 层（ML2）插件 
+编辑/etc/neutron/plugins/ml2/ml2_conf.ini 文件，并完成以下步骤： 
+A．在[ML2]部分： 
+[ml2] 
+... 
+type_drivers = flat,gre 
+tenant_network_types = gre 
+mechanism_drivers = openvswitch 
+ 
+B．在[ml2_type_gre]部分，配置隧道标识符(id)范围： 
+[ml2_type_gre] 
+... 
+tunnel_id_ranges = 1:1000 
+ 
+C．在[securitygroup]部分： 
+[securitygroup] 
+
+enable_security_group = True 
+enable_ipset = True 
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver 
+B．在[neutron]部分，配置访问参数： 
+[neutron] 
+... 
+url = http://controller:9696 
+auth_strategy = keystone 
+admin_auth_url = http://controller:35357/v2.0 
+admin_tenant_name = service 
+admin_username = neutron admin_password = NEUTRON_PASS 
+用您选择的 neutron 用户密码替换 NEUTRON_PASS。 
+ 
+完成安装 
+1、网络服务初始化脚本需要一个符号链接/etc/neutron/plugin.ini 插件配置文件
+中，打开指向名为 ML2 层的 /etc/neutron/plugins/ml2/ml2_conf.ini 文件。如果此
+符号链接不存在，就使用以下命令创建它 
+ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini 
+2、填充 neutron 数据库 
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+--config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade juno" neutron 
+

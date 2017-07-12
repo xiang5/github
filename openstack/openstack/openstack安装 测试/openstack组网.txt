@@ -1,0 +1,163 @@
+组网方式
+典型的组网方式包括nova-network的dhcpflat、vlan，neutron的bridge + vlan、bridge + vxlan、ovs + vlan、ovs + vxlan，其选择上可以从3个维度来看，nova-network和neutron的选择、网络拓扑flat、vlan、gre、vxlan的选择、插件Linux bridge和ovs的选择。
+
+nova-network和neutron的选择：
+nova-network：稳定，结构简单，但目前仅支持linux bridge一种插件；
+neutron：可以支持bridge、ovs等众多插件，并且通过ml2技术可以实现众多插件混合使用，引入openflow等sdn技术，是控制逻辑和物理网络相隔离。但neutron目前最大的问题是稳定性（例如创建过多的vm，host会无故重启，neutron服务会无故down掉，floating ip无法正常释放等，这些问题目前都在查找原因，尚未解决），而且iec house版本不支持network muti-host部署（据说juno版本支持，接下来搭建个环境研究一下）
+结论：未来的openstack，neutron组件会是其趋势，nova-network会渐渐被替换掉，但是在未解决其稳定性和network node ha问题之前还不适用于线上环境。
+
+网络拓扑flat、vlan、gre、vxlan的选择：
+flat： 模式简单，但有广播风暴的风险，不适于大规模部署（一千台vm？）；
+vlan：可以隔离广播风暴，但需要配置物理交换机chunk口；
+gre：可以隔离广播风暴，不需要交换机配置chunk口， 解决了vlan id个数限制，3层隧道技术可以实现跨机房部署。但gre是点对点技术，每两个点之间都需要有一个隧道，对于4层的端口资源是一种浪费；
+vxlan：可以隔离广播风暴，不需要交换机配置chunk口， 解决了vlan id个数限制，解决了gre点对点隧道个数过多问题，实现了大2层网络，可用于vm在机房之间的的无缝迁移，便于跨机房部署。唯一的缺点就是vxlan增加了ip头部大小，需要降低vm的mtu值，传输效率上会略有下降。
+结论：如果不需要通过大二层网络实现跨机房部署，可以选择vlan，如果涉及到跨机房部署，需要大二层的通信方式，选择vxlan。
+
+Linux bridge和ovs的选择：
+这两种插件是目前业界使用最多的，非官方统计（摘自http://wenku.it168.com/d_001350820.shtml） 二者在众多插件使用份额是，Linux bridge31%、ovs 39%
+
+Linux bridge：历史悠久，稳定性值得信赖，但是当vm个数过多，二层交换出现问题时，目前没有特别好的定位手段。
+ovs：可以针对每个vm做流量限制、流量监控、数据包分析，同时可以引入openflow，引入sdn controller，使控制逻辑和物理交换相分离，并且sdn controller可以实现vxlan的跨机房大二层通信，但是业界普遍认为其性能是个大问题。
+实验室测试结果：
+
+不同host上的两个vm，通过ping测试响应时间，如下表所示
+
+ 组网
+
+ fixed ip
+
+ floating ip
+
+ 备注
+
+ Linux bridge + vxlan
+
+ 1.124ms
+
+ 1.509ms
+
+
+ ovs + vxlan
+
+ 1.179ms
+
+ 1.898ms
+
+
+ 关闭安全组 ovs + vxlan
+
+ 1.073ms
+
+
+
+在同一个host上的，2个vm互跑流量，如下表所示
+
+组网
+
+ 吞吐量
+
+ cpu占用情况
+
+ 备注
+
+ Linux bridge + vxlan
+
+ 7.86 Gbits/sec
+
+ 23.7%us, 15.7%sy, 52.1%id, 8.5%si
+
+
+ ovs + vxlan
+
+ 7.10 Gbits/sec
+
+ 23.1%us, 16.5%sy, 46.9%id, 13.5%si
+
+
+ 关闭安全组ovs + vxlan
+
+ 8.32 Gbits/sec
+
+ 28.7%us, 19.4%sy, 46.3%id, 5.6%si
+
+
+测试结果说明：
+
+1、cpu占用量记录的是瞬时值，上下会有大约5%的波动。
+
+2、关于响应时间：ovs+ vxlan（关闭安全组）< Linux bridge + vxlan <  ovs +vxlan
+
+3、关于吞吐量：ovs+ vxlan（关闭安全组）> Linux bridge + vxlan >  ovs +vxlan
+
+4、在ovs组网中，需要为每个vm创建一个bridge（用于安全组的实现），所以关闭安全组，将vm直接桥接到ovs上，其吞吐量响应时间都会有所改善。
+
+5、就本次结果来看，在不采用安全组的情况下，ovs性能要略好于Linux bridge
+
+
+
+
+Neutron基本概念
+
+网络
+在普通人的眼里，网络就是网线和供网线插入的端口，一个盒子会提供这些端口。对于网络工程师来说，网络的盒子指的是交换机和路由器。所以在物理世界中，网络可以简单地被认为包括网线，交换机和路由器。当然，除了物理设备，我们还有软的物件：IP地址，交换机和路由器的配置和管理软件以及各种网络协议。要管理好一个物理网络需要非常深的网络专业知识和经验。
+Neutron网络目的是（为OpenStack云更灵活地）划分物理网络，在多租户环境下提供给每个租户独立的网络环境。另外，Neutron提供API来实现这种目标。Neutron中“网络”是一个可以被用户创建的对象，如果要和物理环境下的概念映射的话，这个对象相当于一个巨大的交换机，可以拥有无限多个动态可创建和销毁的虚拟端口。
+端口
+在物理网络环境中，端口是用于连接设备进入网络的地方。Neutron中的端口起着类似的功能，它是路由器和虚拟机挂接网络的着附点。
+路由器
+和物理环境下的路由器类似，Neutron中的路由器也是一个路由选择和转发部件。只不过在Neutron中，它是可以创建和销毁的软部件。
+子网
+简单地说，子网是由一组IP地址组成的地址池。不同子网间的通信需要路由器的支持，这个Neutron和物理网络下是一致的。Neutron中子网隶属于网络。
+ 
+Neutron网络的一种典型结构
+
+有这么多的基本概念，使用起来是不是很麻烦？其实只要我们好好梳理一下，neutron的基本操作还是很简单的。
+首先我们规划一下我们的网络。Neutron典型的网络结构如下图所示：
+
+
+在报文入口方向打上vlan，在br-int网桥上进行二层的隔离，对neutron-ovs-agent来说，这个是一个内部vlan，因此，很显然，对于这个主机使用的network来说，
+在主机侧neutron-ovs-agent都会维护一个内部vlan，并且是一一对应的，用于不同network的虚拟机在板上的互相隔离，由于板内虚拟机通信不经过物理网口，因此，也不会受到网口带宽和物理交换机性能的影响。
+
+这里以vlan类型网络举例，network的segment_id为100，即vlan为100，虚拟机出来的报文在进入br-int网桥上被打上内部的vlan，举例来说打上vlan 3，下行的流量在经过对应的网络平面后，vlan会进行对应的修改，通过ovs的flow table把vlan修改成真实的vlan值100；上行流量在br-int网桥上通过flow table把vlan 100修改成内部的vlan 3，flat网络原理类似，
+下行流量会在br-eth通过flow table strip_vlan送出网口,vxlan类型的网络稍有不同，不过原理也是类似。
+
+用最精炼语言介绍OpenStack网络代码演进的前世今生
+Joshua2013-9-5	| 1条评论
+在OpenStack世界中，网络组件最初叫nova-network，它混迹于计算节点nova的代码库中。nova-network可以单独部署在一台机器上，为了高性能HA也可以和nova-compute一样部署在计算节点上（这也就是所谓的multi-host功能）。nova-network实现简单，bug少，但性能可不弱哦，直接采用基于Linux内核的Linux网桥少了很多层抽象应该算强大的。不足之处是支持的插件少（只支持Linux网桥），支持的网络拓扑少（只支持flat, vlan)。
+
+为了支持更多的插件，支持更多的网络拓扑，更灵活的与nova交互，于是有了quantum工程。quantum插件不仅支持Linux网桥，也支持OpenvSwitch，一些SDN的插件以及其他商业公司的插件。在网络拓扑上，除了支持flat，vlan外，还支持gre, vxlan。但quantum不支持关键的multi-host特性。
+quantum因为和一家公司的名称冲突，于是，改名为neutron。
+
+neutron继续演进，quantum之前的实现存在这么一个问题。我们说道说道。在quantum中，实现一种类型的插件一般包括两个部分，一部分与数据库db打交道称之为plugin，一部分是调用具体的网络设备真正干活的称之为agent。像plugin就有linux bridge plugin, opevswitch plugin, hyper-v plugin等，这些plugin因为都是与db打交道，变化的字段并不多，所以代码绝大部分是重复的。这样也就出来了一个公共的plugin叫ml2 plugin(具体的代码实现就是TypeDriver)。
+
+但这只是一个表象，ml2还有更大的作用，那就是它里面的MechanismDriver。我举个例子讲，之前没有ml2的时候，plugin只能支持一种，用了linux bridge，就不能用openvswitch了，想要都用那怎么办，那就需要MechanismDriver上场，MechanismDriver的作用是将agent的类型agent_type和vif_type关联，这样vif_type就可以直接通过扩展api灵活设置了，所以这时候你想用linux bridge你在vif_type里直接将port绑定成linux bridge就行了，同理，想用openvswitch就将vif_type将port绑定成openvswitch就行。
+
+除了让openvswitch, linux bridge这些不同的插件共存之外，ml2还能让不同的拓扑如flat, vlan, gre, vxlan其乐融融和谐共存，直接在ml2_conf.ini这个配置文件里都配上即可。这样也就解决了一个问题，以前前端horizon中无法配置是用flat还是vlan，因为你配了也没有用，那时候后端还不支持flat和vlan同时存在了，现在皆大欢喜了。
+
+上面的ml2解决的只是网络中L2层的问题，对于L3层的路由功能neturon又单独整出个l3-agent，对于dhcp功能又单独整出个dhcp-agent，不过它们归根结底仍属于实际真正干功能活的，对于和数据库db打交道的那部分则是通过提供扩展api来实现的。那么现在我们想加更多的网络服务该怎么办呢，如L4-L7层的FwaaS, VPNaaS, DNATaaS, DNSaaS，所以现在neutron又出来一个新的服务框架用于将所有这些除L2层以外的网络服务类似于上述ml2的思想在数据库这块一网打尽。并且这些网络服务可能是有序的，例如可能需要先过FwaaS防火墙服务再过DNATaaS服务来提供浮动IP，所以也就有了service chain的概念。目前这块代码只进去了firewall, loadbalance, metering, vpn几块，但万变不离其宗，未来neutron就是朝这个思想继续往下做。想用哪些服务可以通过neutron.conf这个配置文件中的service_provider项指定。
+
+最后，需要一提的是，从性能角度讲，我认为目前neutron仍然不能用于大规模的生产环境，理由如下：
+1)虽然增加了更多的插件，更多的网络服务，更多的网络拓扑，但它仍然不支持multi-host功能，对性能是极大影响
+2)neutron-server不支持workers通过fork实现的利用cpu多核的多进程机制，仍然是单线程实现的，阻塞的话(python解释器是单进程的，使用greenlet保证每个线程在单进程下也是线性的），会延缓接受其他请求对性能产生影响。
+3)neutron-server是无状态的服务，理论上讲是可以在多台机器上运行前端再加haproxy实现HA的，但实际代码中存在众多竞争条件的bug。当然这个问题不仅在neturon有，其他组件我看一样存在。
+4)在遂道性能方面存在优化的可能，遂道如GRE,VXLAN等将虚拟L2层打通反而扩大了广播风暴的可能，实际上虚拟网桥或者hypervisor都是知道虚机的IP和MAC地址的映射的关系的，根本不需要仍使用传统的ARP广播方式来获得这种映射关系。
+5)其他…
+
+成熟的路上漫漫其修远兮，这也正好给各位爱好openstack的童鞋们提供了大显身手的好机会：）
+
+计算节点：集成网桥(br-int)的网络
+刚才说到D(这也是一个TAP设备)在br-int上面，现在轮到br-int出场了，br-int是由OpenvSwitch虚拟化出来的网桥，
+但事实上它已经充当了一个虚拟交换机的功能了。br-int的主要职责就是把它所在的计算节点上的VM都连接到它这个虚拟交换机上面，
+然后利用下面要介绍的br-tun的穿透功能，实现了不同计算节点上的VM连接在同一个逻辑上的虚拟交换机上面的功能。这个似乎有点拗口，其实就是在管理员看来，所有的VM都是连接在一个虚拟交换机上面的，但事实上这些VM又都是分布在不同的物理主机上面。OK，回到D上面，D通常以qvo开头。在上面还有另一个端口E，它总是以patch-tun的形式出现，从字面就可以看出它是用来连接br-tun的。
+
+
+
+
+
+br-int的主要职责就是把它所在的计算节点上的VM都连接到它这个虚拟交换机上面，
+计算节点：通道网桥(br-tun)的网络
+br-tun在上面已经提及了，这同样是OpenvSwitch虚拟化出来的网桥，但是它不是用来充当虚拟交换机的，它的存在只是用来充当一个通道层，通过它上面的设备G与其他物理机上的br-tun通信，构成一个统一的通信层。这样的话，网络节点和计算节点、计算节点和计算节点这样就会点对点的形成一个以GRE为基础的通信网络，互相之间通过这个网络进行大量的数据交换。
+这样，网络节点和计算节点之间的通信就此打通了。而图中的G、H正是描画这一通信。
+
+网络节点：外部网桥（br-ex）的网络
+当数据从router中路由出来后，就会通过L、K传送到br-ex这个虚拟网桥上，而br-ex实际上是混杂模式加载在物理网卡上，实时接收着网络上的数据包。至此，我们的计算节点上的VM就可以与外部的网络进行自由的通信了。
+当然，前提是我们要给这个VM已经分配了float-ip。

@@ -1,0 +1,26 @@
+Jul 21 09:11:24 jyw-o-controls01 keystone-all[1308]: /usr/lib64/python2.7/site-packages/sqlalchemy/sql/default_comparator.py:35: SAWarning: The IN...
+Jul 21 09:11:24 jyw-o-controls01 keystone-all[1308]: return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
+Jul 21 09:11:25 jyw-o-controls01 keystone-all[1308]: /usr/lib64/python2.7/site-packages/sqlalchemy/sql/default_comparator.py:35: SAWarning: The IN...
+Jul 21 09:11:25 jyw-o-controls01 keystone-all[1308]: return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
+Jul 21 09:11:26 jyw-o-controls01 keystone-all[1308]: /usr/lib64/python2.7/site-packages/sqlalchemy/sql/default_comparator.py:35: SAWarning: The IN...
+Jul 21 09:11:26 jyw-o-controls01 keystone-all[1308]: return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
+Jul 21 09:11:28 jyw-o-controls01 keystone-all[1308]: /usr/lib64/python2.7/site-packages/sqlalchemy/sql/default_comparator.py:35: SAWarning: The IN...
+Jul 21 09:11:28 jyw-o-controls01 keystone-all[1308]: return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
+Jul 21 09:11:28 jyw-o-controls01 keystone-all[1308]: /usr/lib64/python2.7/site-packages/sqlalchemy/sql/default_comparator.py:35: SAWarning: The IN...
+Jul 21 09:11:28 jyw-o-controls01 keystone-all[1308]: return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
+Hint: Some lines were ellipsized, use -l to show in full.
+
+出现以上错误，是应为keystone配置文件中少配置了两项,如果少配置了该两项，则webUI不能访问，认证不能通过，但是http服务是好的
+[catalog]
+driver=keystone.catalog.backends.sql.Catalog
+....
+[identity]
+driver=keystone.identity.backends.sql.Identity
+
+Error received from ovsdb monitor: ovsdb-client: unix:/var/run/openvswitch/db.sock: receive failed (End of file)
+
+
+##########################################################################################################################
+
+ERROR neutron.agent.linux.ovsdb_monitor [-] Error received from ovsdb monitor: ovsdb-client: unix:/var/run/openvswitch/db.sock: receive failed (End of file)
+
